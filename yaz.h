@@ -37,6 +37,7 @@
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
+#include <lwip/prot/ip4.h>
 #include <netinet/udp.h>
 #include <arpa/inet.h>
 #include <poll.h>
@@ -160,7 +161,7 @@ struct ProbeStamp
 struct YazPkt
 {
     YazPkt() : m_stream(0), m_sequence(0) {}
-    
+
     int m_stream;
     int m_sequence;
 };
@@ -170,7 +171,7 @@ struct YazPcapCtrl
 {
     YazPcapCtrl() : m_ok(0), m_mutex(0), m_tlist(0), m_dport(0)
 #if HAVE_PCAP_H
-    , m_pcap(0) 
+    , m_pcap(0)
 #endif
     {}
 
@@ -197,7 +198,7 @@ public:
 #if HAVE_PCAP_H
             m_pcap_probes = new std::vector<ProbeStamp>();
             if (!m_pcap_probes)
-            { 
+            {
                 std::cerr << "!!couldn't allocate probe stamp vector" << std::endl;
                 throw -1;
             }
@@ -230,7 +231,7 @@ public:
             delete m_running;
 #endif
         }
- 
+
     virtual void run() = 0;
     virtual bool validate() = 0;
 
@@ -290,8 +291,8 @@ protected:
 class YazSender : public YazEndPt
 {
 public:
-    YazSender() : YazEndPt(), m_min_pkt_size(200), m_curr_pkt_size(1500), 
-                  m_stream_length(50), m_target_spacing(MIN_SPACE), 
+    YazSender() : YazEndPt(), m_min_pkt_size(200), m_curr_pkt_size(1500),
+                  m_stream_length(50), m_target_spacing(MIN_SPACE),
                   m_max_pkt_spacing(MAX_SPACE), m_nstreams(1),
                   m_inter_stream_spacing(20000), m_curr_stream(0),
                   m_resolution(1000000.0)
@@ -312,7 +313,7 @@ public:
     bool checkTarget()
         {
             if (m_target_addr.s_addr == 0)
-                return false; 
+                return false;
             return true;
         }
 
@@ -376,7 +377,7 @@ public:
             if (!rv)
                 std::cerr << "!!input validation failed" << std::endl;
 
-            return (rv); 
+            return (rv);
         }
 
     void setMinPktSize(int &i) { m_min_pkt_size = i; }
@@ -396,10 +397,10 @@ protected:
 private:
     struct MeasurementBundle
     {
-        MeasurementBundle() : m_local_app_mean(0), 
-                              m_local_pcap_mean(0), 
-                              m_remote_app_mean(0), 
-                              m_remote_pcap_mean(0), 
+        MeasurementBundle() : m_local_app_mean(0),
+                              m_local_pcap_mean(0),
+                              m_remote_app_mean(0),
+                              m_remote_pcap_mean(0),
                               m_local_ttl(0), m_remote_ttl(0),
                               m_local_nsamples(0), m_local_nlost(0),
                               m_remote_nsamples(0), m_remote_nlost(0)
@@ -480,7 +481,7 @@ private:
 
 class YazReceiver : public YazEndPt
 {
-public:    
+public:
     YazReceiver(): YazEndPt() {}
     virtual ~YazReceiver() {}
 
