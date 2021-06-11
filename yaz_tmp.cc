@@ -49,7 +49,7 @@ void YazSender::prepProbe()
         std::cerr << "error binding local probe socket: " << errno << '/' << strerror(errno) << std::endl;
         throw -1;
     }
-   
+
     sin.sin_family = AF_INET;
     memcpy(&sin.sin_addr, &m_target_addr, sizeof(struct in_addr));
     sin.sin_port = htons(DEST_PORT);
@@ -66,7 +66,7 @@ void YazSender::cleanup()
 {
     close (m_probe_sd);
     close (m_ctrl_sd);
- 
+
 #if HAVE_PCAP_H
     unprepPcap();
 #endif
@@ -112,7 +112,7 @@ bool YazSender::collectRemote(MeasurementBundle &mb)
 
 
     struct timeval start, now, diff;
-    gettimeofday(&start, 0);  
+    gettimeofday(&start, 0);
     int elapsed = 0;
 
     bool done = false;
@@ -130,7 +130,7 @@ bool YazSender::collectRemote(MeasurementBundle &mb)
         else if (rv == 1 && pfd.revents & POLLIN)
         {
             remain = sizeof(YazCtrlMsg);
-            offset = 0; 
+            offset = 0;
             while (remain > 0)
             {
                 int n = recv(m_ctrl_sd, ((char*)&pmsg)+offset, remain, 0);
@@ -159,7 +159,7 @@ bool YazSender::collectRemote(MeasurementBundle &mb)
             remain = ntohl(pmsg.m_len);
             YazRstResponse *yrr = new YazRstResponse();
             char *buffer = (char *)yrr;
-            offset = 0; 
+            offset = 0;
             while (remain > 0)
             {
                 int n = recv(m_ctrl_sd, buffer+offset, remain, 0);
@@ -182,7 +182,7 @@ bool YazSender::collectRemote(MeasurementBundle &mb)
             float mean = 0;
             int nsamp = 0;
             int nlost = 0;
-            
+
             valid_measurement = getSpacing(&m_app_probes, mean, nsamp, nlost, (m_target_spacing * 2));
             mb.m_local_app_mean = mean;
             mb.m_local_nsamples = nsamp;
@@ -200,7 +200,7 @@ bool YazSender::collectRemote(MeasurementBundle &mb)
             {
 
                 // assumption that at least as many probes will arrive at
-                // app level as at pcap level.  seems reasonable, since 
+                // app level as at pcap level.  seems reasonable, since
                 // most likely situation is that there are fewer at app level
                 // than pcap.
                 int maxwait = pcap_wait_timeout;
@@ -215,10 +215,10 @@ bool YazSender::collectRemote(MeasurementBundle &mb)
                     std::cout << "##warning: didn't get all probes at pcap level" << std::endl;
 
                 pthread_mutex_lock(m_pcap_mutex);
-                valid_measurement = 
+                valid_measurement =
                     getSpacing(m_pcap_probes, mean, nsamp, nlost, (m_target_spacing * 2));
 
-                valid_measurement = valid_measurement && 
+                valid_measurement = valid_measurement &&
                     checkTTL(m_pcap_probes, ttl);
                 m_pcap_probes->clear();
                 pthread_mutex_unlock(m_pcap_mutex);
@@ -389,7 +389,7 @@ void YazSender::run()
 #if HAVE_PCAP_H
     std::ostringstream ostr;
     ostr << "udp and host " << buffer;
-    m_pcap_filter_string = ostr.str(); 
+    m_pcap_filter_string = ostr.str();
 #endif
 
     std::list<MeasurementBundle> *measurement_list = new std::list<MeasurementBundle>();
@@ -422,15 +422,15 @@ void YazSender::run()
         {
             struct timeval tvbegin;
             gettimeofday(&tvbegin, 0);
-     
+
             // m_target_spacing = MIN_SPACE;
             m_target_spacing = 80; // JES - temporary
             m_curr_pkt_size = saved_pkt_size;
 
-            if (m_verbose) 
+            if (m_verbose)
                 std::cout << "## starting sample " << runnum << std::endl;
 
-            if (m_verbose > 1) 
+            if (m_verbose > 1)
                 std::cout << "## sample " << runnum << ", initial spacing:" << m_target_spacing << std::endl;
 
 
@@ -479,7 +479,7 @@ void YazSender::run()
                 float curr_rate = ((m_curr_pkt_size * 8.0) / mb.m_local_pcap_mean) * 1000000;
                 float resol_spc = (m_curr_pkt_size * 8.0) / (curr_rate - m_resolution) * 1000000 - mb.m_local_pcap_mean;
                 float maxdiff = std::max(1.0f, resol_spc);
-                bool compexp =  
+                bool compexp =
                     (fabs(mb.m_remote_pcap_mean - mb.m_local_pcap_mean) > maxdiff);
 
                 // force lower rate if there's packet loss
@@ -490,9 +490,9 @@ void YazSender::run()
 
                 if (m_verbose)
                 {
-                    std::cout << "## local spacing: " 
+                    std::cout << "## local spacing: "
                               << mb.m_local_pcap_mean << std::endl;
-                    std::cout << "## remote spacing: " 
+                    std::cout << "## remote spacing: "
                               << mb.m_remote_pcap_mean << std::endl;
                     std::cout << "## compexp: " << compexp << std::endl;
 
@@ -540,7 +540,7 @@ void YazSender::run()
                     }
                 }
                 else
-                {   
+                {
                     current_estimate = (float(m_curr_pkt_size) * 8.0 ) / (mb.m_local_pcap_mean / 1000000.0);
                     done = true;
                     if (m_verbose)
@@ -552,20 +552,20 @@ void YazSender::run()
 #endif
                 }
 
-                // set sleep time to be exponentially distributed 
+                // set sleep time to be exponentially distributed
                 int sleeptime = int(-1 * (m_inter_stream_spacing/1000) * log(1.0 - (random() / double(INT_MAX))));
                 usleep(sleeptime * 1000);
             }
-        
+
             struct timeval tvend;
             gettimeofday(&tvend, 0);
-        
+
             std::cout << runnum << " "
-                      << tvbegin.tv_sec << '.' 
-                      << std::setw(6) << std::setfill('0') 
+                      << tvbegin.tv_sec << '.'
+                      << std::setw(6) << std::setfill('0')
                       << tvbegin.tv_usec << " "
-                      << tvend.tv_sec << '.' 
-                      << std::setw(6) << std::setfill('0') 
+                      << tvend.tv_sec << '.'
+                      << std::setw(6) << std::setfill('0')
                       << tvend.tv_usec << " "
                       << std::setprecision(0)
                       << current_estimate/1000.0 << std::endl;
@@ -613,7 +613,7 @@ void YazSender::sendStream()
     // send m_stream_length packets
 
     struct timeval now, target, diff;
-    int payload_size = m_curr_pkt_size - sizeof(struct ip) - sizeof(struct udphdr);
+    int payload_size = m_curr_pkt_size - sizeof(struct ip_hdr) - sizeof(struct udphdr);
     char *buffer = new char[payload_size];
     memset(buffer, 0, payload_size);
 
@@ -674,4 +674,3 @@ void YazSender::sendStream()
     }
     delete [] buffer;
 }
-
