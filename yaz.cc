@@ -56,7 +56,7 @@ static int get_offset(int dltype)
         offset = 14;
         break;
     case DLT_LOOP:
-    case DLT_RAW: 
+    case DLT_RAW:
     case DLT_PPP_SERIAL:
         offset = 6;
         break;
@@ -87,7 +87,7 @@ void pcap_callback(u_char *arg, const pcap_pkthdr *ph, const u_char *pkt)
     ps.m_ttl = iph->ip_ttl;
     ps.m_stream = ntohl(pp->m_stream);
     ps.m_sequence = ntohl(pp->m_sequence);
-        
+
     pthread_mutex_lock(ppc->m_mutex);
     (ppc->m_tlist)->push_back(ps);
     pthread_mutex_unlock(ppc->m_mutex);
@@ -116,14 +116,14 @@ extern "C"
 
         int pcapfd = pcap_fileno(ppc->m_pcap);
         pollfd pfd;
- 
+
         while (*(ppc->m_ok))
         {
             int npkt = pcap_dispatch(ppc->m_pcap, -1, pcap_callback, (u_char*)arg);
             if (npkt < 0)
                 std::cerr << "error in pcap dispatch: " << pcap_geterr(ppc->m_pcap) << std::endl;
 
-            pfd.fd = pcapfd; 
+            pfd.fd = pcapfd;
             pfd.events = POLLIN;
             pfd.revents = 0;
             int n = poll(&pfd, 1, 1000);
@@ -164,7 +164,7 @@ void YazEndPt::prepPcap()
 
 #if HAVE_PCAP_BIOCIMMEDIATE
     int imm = 1;
-    if ( ioctl(pcap_fileno(m_pcap), BIOCIMMEDIATE, &imm) < 0 ) 
+    if ( ioctl(pcap_fileno(m_pcap), BIOCIMMEDIATE, &imm) < 0 )
         std::cerr << "unable to set wire-immediate mode" << std::endl;
 #endif
 
@@ -180,7 +180,7 @@ void YazEndPt::prepPcap()
         throw -1;
     }
 
-    if (pcap_setfilter(m_pcap, &code) < 0) 
+    if (pcap_setfilter(m_pcap, &code) < 0)
     {
         std::cerr << "!!failed to set pcap filter: " << pcap_geterr(m_pcap) << std::endl;
         throw -1;
@@ -232,7 +232,7 @@ void YazEndPt::measureSyscallOverhead()
     std::list<double>::iterator it = diffli.begin();
     for (int i = 0; i < YAZOSTIMINGSAMPLES/2; ++i, ++it) ;
     double median = *it;
-    
+
     double sco = diffsum / (YAZOSTIMINGSAMPLES - 1);
     if (m_verbose)
     {
@@ -264,16 +264,16 @@ void YazEndPt::measureMinSleep()
         double usecs = diff.tv_sec * 1000000.0 + double(diff.tv_usec);
         usecsum += usecs;
         usecsumsq += pow(usecs, 2.0);
-        imax = std::max(imax, int(diff.tv_sec * 1000000 + diff.tv_usec)); 
+        imax = std::max(imax, int(diff.tv_sec * 1000000 + diff.tv_usec));
         diffli.push_back(diff.tv_sec * 1000000.0 + double(diff.tv_usec));
     }
     diffli.sort();
     std::list<double>::iterator it = diffli.begin();
     for (int i = 0; i < YAZOSTIMINGSAMPLES/2; ++i, ++it) ;
     double median = *it;
-    double mean = usecsum / double(YAZOSTIMINGSAMPLES - 1); 
+    double mean = usecsum / double(YAZOSTIMINGSAMPLES - 1);
     double stdev = sqrt((usecsumsq * (YAZOSTIMINGSAMPLES - 1) - pow(usecsum,2.0)) / (double(YAZOSTIMINGSAMPLES - 2) * double(YAZOSTIMINGSAMPLES - 1)));
-     
+
 
     // m_min_sleep is the minimun amount of time (usecs) that we'll attempt
     // to sleep.  otherwise, we spin-wait.
@@ -335,13 +335,13 @@ bool YazEndPt::getSpacing(std::vector<ProbeStamp> *vps,
             // was lost.  if lost pkts, then egress spacing is (almost
             // by definition) larger than ingress, so this will cause
             // us to back off, as we want anyway.
-        
+
             rv = ((*vps)[i].m_sequence > (*vps)[i-1].m_sequence);
             if (m_verbose)
                 std::cout << "!! lost or reordered <" << (*vps)[i-1].m_sequence << "," << (*vps)[i].m_sequence << ">" << std::endl;
             nlost += (*vps)[i].m_sequence - (*vps)[i-1].m_sequence;
         }
-        
+
         struct timeval diff;
         timersub(&(*vps)[i].m_ts, &(*vps)[i-1].m_ts, &diff);
         float m = diff.tv_sec * 1000000.0 + float(diff.tv_usec);
@@ -362,7 +362,7 @@ bool YazEndPt::getSpacing(std::vector<ProbeStamp> *vps,
         sum += *iter;
         n += 1;
     }
-     
+
     nused = int(n);
 
     if (rv && n > 1)
@@ -406,23 +406,6 @@ void YazEndPt::getClockTick()
     // fail.
     const int DEFAULT_HZ = 100;
 
-#if HAVE_SYSCTLBYNAME
-
-    // common on BSD systems 
-    struct clockinfo ci;
-    size_t cisize = sizeof(ci);
-    int rv = sysctlbyname("kern.clockrate", &ci, &cisize, 0, 0);
-    if (rv == 0)
-        m_clock_tick = ci.hz;
-    else
-        m_clock_tick = DEFAULT_HZ;
-
-#elif HAVE_SYSCONF
-
-    // pretty common interface - try this first
-    m_clock_tick = int(sysconf(_SC_CLK_TCK));
-
-#elif HAVE_PARAM_H
 #ifdef HZ
 
     // on linux and solaris, maybe others
@@ -434,9 +417,7 @@ void YazEndPt::getClockTick()
     m_clock_tick = DEFAULT_HZ;
 
 #endif
-#endif 
 
     if (m_verbose)
         std::cout << "## clock tick (HZ): " << m_clock_tick << std::endl;
 }
-
