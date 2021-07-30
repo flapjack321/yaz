@@ -207,7 +207,7 @@ void YazReceiver::run()
                 pfd[1].revents = 0;
 
                 npfd = 2;
-                int rv = poll(&pfd[0], npfd, 0);
+                int rv = poll(&pfd[0], npfd, 1);
                 if (rv == -1)
                 {
                     std::cerr << "error in poll(): " << errno << '/' << strerror(errno) << std::endl;
